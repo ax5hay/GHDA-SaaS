@@ -1,0 +1,135 @@
+{
+  "version": "1.0.0",
+  "description": "Phrase dictionary for PPC laboratory issues",
+  "language": "hinglish",
+  "phrases": [
+    {
+      "id": "LAB_001",
+      "raw_patterns": [
+        "sample room temp me",
+        "sample room temperature",
+        "cold chain nahi",
+        "fridge me nahi rakha",
+        "refrigerator me nahi",
+        "room temperature me rakha"
+      ],
+      "canonical_intent": "LAB_SAMPLE_STORAGE_VIOLATION",
+      "category": "PROTOCOL_VIOLATION",
+      "severity": "critical",
+      "match_type": "fuzzy",
+      "min_confidence": 0.85,
+      "description": "Samples stored at room temperature instead of cold storage"
+    },
+    {
+      "id": "LAB_002",
+      "raw_patterns": [
+        "cold chain break",
+        "cold chain tuta",
+        "refrigeration failed",
+        "fridge kharab"
+      ],
+      "canonical_intent": "LAB_COLD_CHAIN_BREAK",
+      "category": "PROTOCOL_VIOLATION",
+      "severity": "critical",
+      "match_type": "fuzzy",
+      "min_confidence": 0.85,
+      "description": "Cold chain broken during storage/transport"
+    },
+    {
+      "id": "LAB_003",
+      "raw_patterns": [
+        "lab overload",
+        "lab me bheed",
+        "lab capacity full",
+        "lab busy",
+        "lab me jyada load"
+      ],
+      "canonical_intent": "LAB_CAPACITY_OVERLOAD",
+      "category": "SYSTEM_FAILURE",
+      "severity": "high",
+      "match_type": "fuzzy",
+      "min_confidence": 0.8,
+      "description": "Lab capacity overloaded"
+    },
+    {
+      "id": "LAB_004",
+      "raw_patterns": [
+        "lab technician nahi",
+        "lab staff absent",
+        "technician nahi aya",
+        "lab me koi nahi",
+        "lab technician on leave"
+      ],
+      "canonical_intent": "LAB_STAFF_ABSENT",
+      "category": "STAFFING_ISSUE",
+      "severity": "high",
+      "match_type": "fuzzy",
+      "min_confidence": 0.8,
+      "description": "Lab technician absent"
+    },
+    {
+      "id": "LAB_005",
+      "raw_patterns": [
+        "equipment nahi",
+        "machine kharab",
+        "equipment not working",
+        "yantra kharab",
+        "machine nahi chal raha"
+      ],
+      "canonical_intent": "LAB_EQUIPMENT_UNAVAILABLE",
+      "category": "INFRASTRUCTURE_GAP",
+      "severity": "high",
+      "match_type": "fuzzy",
+      "min_confidence": 0.8,
+      "description": "Lab equipment unavailable or broken"
+    },
+    {
+      "id": "LAB_006",
+      "raw_patterns": [
+        "reagent khatam",
+        "reagent nahi",
+        "chemical nahi",
+        "supplies khatam",
+        "stock nahi"
+      ],
+      "canonical_intent": "LAB_REAGENT_SHORTAGE",
+      "category": "SUPPLY_SHORTAGE",
+      "severity": "high",
+      "match_type": "fuzzy",
+      "min_confidence": 0.8,
+      "description": "Lab reagents or chemicals out of stock"
+    },
+    {
+      "id": "LAB_007",
+      "raw_patterns": [
+        "report delay",
+        "report der se mila",
+        "result late",
+        "report me der",
+        "delayed results"
+      ],
+      "canonical_intent": "LAB_REPORT_DELAY",
+      "category": "PROCESS_DELAY",
+      "severity": "medium",
+      "match_type": "fuzzy",
+      "min_confidence": 0.75,
+      "description": "Lab report delayed"
+    },
+    {
+      "id": "LAB_008",
+      "raw_patterns": [
+        "sample reject",
+        "sample kharab",
+        "hemolyzed",
+        "sample quality poor",
+        "sample inadequate"
+      ],
+      "canonical_intent": "LAB_SAMPLE_REJECTED",
+      "category": "QUALITY_ISSUE",
+      "severity": "medium",
+      "match_type": "fuzzy",
+      "min_confidence": 0.8,
+      "description": "Sample rejected due to quality issues"
+    }
+  ]
+}

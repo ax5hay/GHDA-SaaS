@@ -1,0 +1,177 @@
+{
+  "version": "1.0.0",
+  "description": "Phrase dictionary for PPC beneficiary attendance barriers",
+  "language": "hinglish",
+  "phrases": [
+    {
+      "id": "ATT_001",
+      "raw_patterns": [
+        "pti ka exident",
+        "pati ka accident",
+        "husband accident",
+        "pti ka accident ho gya",
+        "pati accident me",
+        "husband ka accident hua"
+      ],
+      "canonical_intent": "REASON_HUSBAND_ACCIDENT",
+      "category": "PERSONAL_EMERGENCY",
+      "severity": "high",
+      "match_type": "fuzzy",
+      "min_confidence": 0.7,
+      "description": "Husband had an accident"
+    },
+    {
+      "id": "ATT_002",
+      "raw_patterns": [
+        "mayke gyi",
+        "mayke me hai",
+        "maternal home",
+        "sasural se mayke",
+        "mayke gayi hui",
+        "parental home gyi"
+      ],
+      "canonical_intent": "REASON_BENEFICIARY_AT_MATERNAL_HOME",
+      "category": "CULTURAL_SOCIAL",
+      "severity": "medium",
+      "match_type": "fuzzy",
+      "min_confidence": 0.75,
+      "description": "Beneficiary at maternal/parental home"
+    },
+    {
+      "id": "ATT_003",
+      "raw_patterns": [
+        "asha nai btaya",
+        "asha ne nahi bataya",
+        "asha did not inform",
+        "asha se inform nahi",
+        "asha ne phone nahi kiya",
+        "asha did not call",
+        "asha ne pata nahi kiya"
+      ],
+      "canonical_intent": "ASHA_COMMUNICATION_FAILURE",
+      "category": "COMMUNICATION_FAILURE",
+      "severity": "high",
+      "match_type": "fuzzy",
+      "min_confidence": 0.8,
+      "description": "ASHA worker failed to inform beneficiary"
+    },
+    {
+      "id": "ATT_004",
+      "raw_patterns": [
+        "family emergency",
+        "ghar me emergency",
+        "family me problem",
+        "gharelu samasya",
+        "family problem",
+        "ghar me issue"
+      ],
+      "canonical_intent": "REASON_FAMILY_EMERGENCY",
+      "category": "PERSONAL_EMERGENCY",
+      "severity": "high",
+      "match_type": "fuzzy",
+      "min_confidence": 0.75,
+      "description": "Family emergency"
+    },
+    {
+      "id": "ATT_005",
+      "raw_patterns": [
+        "kam par gayi",
+        "work pe gayi",
+        "mazduri pe",
+        "kam me vyast",
+        "work conflict",
+        "job par thi"
+      ],
+      "canonical_intent": "REASON_WORK_CONFLICT",
+      "category": "ECONOMIC",
+      "severity": "medium",
+      "match_type": "fuzzy",
+      "min_confidence": 0.75,
+      "description": "Had to go to work / work conflict"
+    },
+    {
+      "id": "ATT_006",
+      "raw_patterns": [
+        "bimar thi",
+        "tabiyat kharab",
+        "illness",
+        "bimari",
+        "bukhar tha",
+        "fever",
+        "sick"
+      ],
+      "canonical_intent": "REASON_ILLNESS",
+      "category": "HEALTH_RELATED",
+      "severity": "medium",
+      "match_type": "fuzzy",
+      "min_confidence": 0.8,
+      "description": "Beneficiary was ill"
+    },
+    {
+      "id": "ATT_007",
+      "raw_patterns": [
+        "safar me thi",
+        "travel",
+        "bahar gayi hui",
+        "yatra par",
+        "out of station",
+        "dusre jagah gayi"
+      ],
+      "canonical_intent": "REASON_TRAVEL",
+      "category": "LOGISTICS",
+      "severity": "low",
+      "match_type": "fuzzy",
+      "min_confidence": 0.75,
+      "description": "Beneficiary traveling"
+    },
+    {
+      "id": "ATT_008",
+      "raw_patterns": [
+        "pata nahi tha",
+        "maloom nahi",
+        "unaware",
+        "jankari nahi thi",
+        "nahi pata tha",
+        "did not know"
+      ],
+      "canonical_intent": "REASON_UNAWARE",
+      "category": "COMMUNICATION_FAILURE",
+      "severity": "high",
+      "match_type": "fuzzy",
+      "min_confidence": 0.8,
+      "description": "Beneficiary was unaware of clinic"
+    },
+    {
+      "id": "ATT_009",
+      "raw_patterns": [
+        "ghar ke kaam",
+        "household work",
+        "gharelu kam",
+        "ghar ka kaam tha",
+        "household chores"
+      ],
+      "canonical_intent": "REASON_HOUSEHOLD_WORK",
+      "category": "CULTURAL_SOCIAL",
+      "severity": "medium",
+      "match_type": "fuzzy",
+      "min_confidence": 0.75,
+      "description": "Busy with household work"
+    },
+    {
+      "id": "ATT_010",
+      "raw_patterns": [
+        "bache ki dekh-bhaal",
+        "child care",
+        "bachho ki care",
+        "taking care of children",
+        "bachhe bimar"
+      ],
+      "canonical_intent": "REASON_CHILDCARE",
+      "category": "CULTURAL_SOCIAL",
+      "severity": "medium",
+      "match_type": "fuzzy",
+      "min_confidence": 0.75,
+      "description": "Child care responsibilities"
+    }
+  ]
+}

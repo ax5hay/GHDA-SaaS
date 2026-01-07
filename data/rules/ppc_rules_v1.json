@@ -1,0 +1,316 @@
+{
+  "version": "1.0.0",
+  "description": "Validation and compliance rules for PPC reports",
+  "program": "PPC",
+  "rules": [
+    {
+      "rule_id": "R_PPC_001",
+      "version": "1.0",
+      "name": "High BMI without exercise counselling",
+      "category": "PROTOCOL_VIOLATION",
+      "severity": "medium",
+      "condition": {
+        "and": [
+          {
+            "field": "clinical_services.services_provided.physical_examination.parameters_checked",
+            "operator": "contains",
+            "value": "bmi"
+          },
+          {
+            "field": "clinical_services.services_provided.counselling.exercise",
+            "operator": "!=",
+            "value": true
+          }
+        ]
+      },
+      "action": {
+        "flag": "MISSING_EXERCISE_COUNSELLING_HIGH_BMI",
+        "message": "Exercise counselling should be provided when BMI is checked",
+        "remediation": "Ensure exercise counselling is provided and documented"
+      },
+      "evidence_fields": [
+        "clinical_services.services_provided.physical_examination.parameters_checked",
+        "clinical_services.services_provided.counselling.exercise"
+      ]
+    },
+    {
+      "rule_id": "R_PPC_002",
+      "version": "1.0",
+      "name": "Lab sample storage violation",
+      "category": "PROTOCOL_VIOLATION",
+      "severity": "critical",
+      "condition": {
+        "and": [
+          {
+            "field": "laboratory.sample_storage.storage_method",
+            "operator": "==",
+            "value": "room_temperature"
+          },
+          {
+            "field": "laboratory.sample_storage.storage_duration_hours",
+            "operator": ">",
+            "value": 2
+          }
+        ]
+      },
+      "action": {
+        "flag": "CRITICAL_LAB_SAMPLE_STORAGE_VIOLATION",
+        "message": "Lab samples stored at room temperature for >2 hours - sample integrity compromised",
+        "remediation": "Ensure proper cold chain maintenance; retrain staff on sample handling protocols"
+      },
+      "evidence_fields": [
+        "laboratory.sample_storage.storage_method",
+        "laboratory.sample_storage.storage_duration_hours"
+      ]
+    },
+    {
+      "rule_id": "R_PPC_003",
+      "version": "1.0",
+      "name": "Low beneficiary attendance",
+      "category": "MOBILIZATION",
+      "severity": "high",
+      "condition": {
+        "field": "beneficiaries.attendance_rate",
+        "operator": "<",
+        "value": 0.5
+      },
+      "action": {
+        "flag": "MOBILIZATION_FAILURE",
+        "message": "Beneficiary attendance rate below 50% - mobilization failure",
+        "remediation": "Review ASHA mobilization activities; improve advance notification; address identified barriers"
+      },
+      "evidence_fields": [
+        "beneficiaries.expected_count",
+        "beneficiaries.actual_count",
+        "beneficiaries.attendance_rate",
+        "beneficiaries.attendance_barriers"
+      ]
+    },
+    {
+      "rule_id": "R_PPC_004",
+      "version": "1.0",
+      "name": "Lab tests done but no report sharing",
+      "category": "FOLLOW_UP",
+      "severity": "medium",
+      "condition": {
+        "and": [
+          {
+            "field": "laboratory.samples_collected",
+            "operator": ">",
+            "value": 0
+          },
+          {
+            "field": "laboratory.results_shared_with_beneficiaries",
+            "operator": "==",
+            "value": false
+          },
+          {
+            "field": "laboratory.results_received",
+            "operator": "==",
+            "value": true
+          }
+        ]
+      },
+      "action": {
+        "flag": "LAB_FOLLOW_UP_FAILURE",
+        "message": "Lab results received but not shared with beneficiaries",
+        "remediation": "Establish system for timely sharing of lab results with beneficiaries"
+      },
+      "evidence_fields": [
+        "laboratory.samples_collected",
+        "laboratory.results_received",
+        "laboratory.results_shared_with_beneficiaries"
+      ]
+    },
+    {
+      "rule_id": "R_PPC_005",
+      "version": "1.0",
+      "name": "Very low beneficiary attendance",
+      "category": "MOBILIZATION",
+      "severity": "critical",
+      "condition": {
+        "field": "beneficiaries.attendance_rate",
+        "operator": "<",
+        "value": 0.25
+      },
+      "action": {
+        "flag": "CRITICAL_MOBILIZATION_FAILURE",
+        "message": "Beneficiary attendance rate below 25% - critical mobilization failure",
+        "remediation": "Immediate intervention required; review entire mobilization strategy; ASHA training needed"
+      },
+      "evidence_fields": [
+        "beneficiaries.expected_count",
+        "beneficiaries.actual_count",
+        "beneficiaries.attendance_rate",
+        "beneficiaries.attendance_barriers"
+      ]
+    },
+    {
+      "rule_id": "R_PPC_006",
+      "version": "1.0",
+      "name": "No dedicated space for PPC clinic",
+      "category": "INFRASTRUCTURE_GAP",
+      "severity": "medium",
+      "condition": {
+        "field": "clinic_setup.dedicated_space.available",
+        "operator": "==",
+        "value": false
+      },
+      "action": {
+        "flag": "NO_DEDICATED_SPACE",
+        "message": "No dedicated space available for PPC clinic",
+        "remediation": "Allocate dedicated space for PPC clinic to ensure privacy and proper service delivery"
+      },
+      "evidence_fields": [
+        "clinic_setup.dedicated_space.available",
+        "clinic_setup.dedicated_space.type"
+      ]
+    },
+    {
+      "rule_id": "R_PPC_007",
+      "version": "1.0",
+      "name": "Staff absence - Medical Officer",
+      "category": "STAFFING_ISSUE",
+      "severity": "high",
+      "condition": {
+        "and": [
+          {
+            "field": "clinical_services.staff_present",
+            "operator": "array_contains",
+            "value": {
+              "designation": "Medical Officer",
+              "present": false
+            }
+          }
+        ]
+      },
+      "action": {
+        "flag": "MEDICAL_OFFICER_ABSENT",
+        "message": "Medical Officer absent during PPC clinic",
+        "remediation": "Ensure Medical Officer availability; arrange backup if required"
+      },
+      "evidence_fields": [
+        "clinical_services.staff_present"
+      ]
+    },
+    {
+      "rule_id": "R_PPC_008",
+      "version": "1.0",
+      "name": "No IEC materials displayed",
+      "category": "PROTOCOL_DEVIATION",
+      "severity": "low",
+      "condition": {
+        "field": "compliance.iec_materials_displayed",
+        "operator": "==",
+        "value": false
+      },
+      "action": {
+        "flag": "IEC_MATERIALS_NOT_DISPLAYED",
+        "message": "IEC (Information, Education, Communication) materials not displayed",
+        "remediation": "Ensure IEC materials are displayed prominently for beneficiary education"
+      },
+      "evidence_fields": [
+        "compliance.iec_materials_displayed"
+      ]
+    },
+    {
+      "rule_id": "R_PPC_009",
+      "version": "1.0",
+      "name": "Cold chain not maintained",
+      "category": "PROTOCOL_VIOLATION",
+      "severity": "critical",
+      "condition": {
+        "field": "laboratory.sample_storage.cold_chain_maintained",
+        "operator": "==",
+        "value": false
+      },
+      "action": {
+        "flag": "CRITICAL_COLD_CHAIN_FAILURE",
+        "message": "Cold chain not maintained for lab samples - sample integrity compromised",
+        "remediation": "Immediate intervention required; samples may need recollection; staff retraining on cold chain"
+      },
+      "evidence_fields": [
+        "laboratory.sample_storage.cold_chain_maintained",
+        "laboratory.sample_storage.storage_method",
+        "laboratory.sample_storage.violations"
+      ]
+    },
+    {
+      "rule_id": "R_PPC_010",
+      "version": "1.0",
+      "name": "ASHA communication failure detected",
+      "category": "SYSTEM_FAILURE",
+      "severity": "high",
+      "condition": {
+        "and": [
+          {
+            "field": "beneficiaries.attendance_barriers",
+            "operator": "array_contains",
+            "value": {
+              "normalized_intent": "ASHA_COMMUNICATION_FAILURE"
+            }
+          },
+          {
+            "field": "beneficiaries.attendance_barriers",
+            "operator": "array_count_where",
+            "condition": {
+              "normalized_intent": "ASHA_COMMUNICATION_FAILURE"
+            },
+            "value": ">",
+            "threshold": 2
+          }
+        ]
+      },
+      "action": {
+        "flag": "ASHA_COMMUNICATION_FAILURE_SYSTEMIC",
+        "message": "ASHA communication failure detected for multiple beneficiaries - systemic issue",
+        "remediation": "ASHA training intervention required; implement SMS backup notification system"
+      },
+      "evidence_fields": [
+        "beneficiaries.attendance_barriers",
+        "asha_performance.performance_issues"
+      ]
+    },
+    {
+      "rule_id": "R_PPC_011",
+      "version": "1.0",
+      "name": "Lab report turnaround time excessive",
+      "category": "PROCESS_DELAY",
+      "severity": "medium",
+      "condition": {
+        "field": "laboratory.result_turnaround_time_days",
+        "operator": ">",
+        "value": 7
+      },
+      "action": {
+        "flag": "LAB_REPORT_DELAY_EXCESSIVE",
+        "message": "Lab report turnaround time exceeds 7 days",
+        "remediation": "Review lab capacity; consider mobile lab unit or increased lab staffing"
+      },
+      "evidence_fields": [
+        "laboratory.result_turnaround_time_days",
+        "laboratory.lab_issues"
+      ]
+    },
+    {
+      "rule_id": "R_PPC_012",
+      "version": "1.0",
+      "name": "Due list not prepared",
+      "category": "PROTOCOL_DEVIATION",
+      "severity": "medium",
+      "condition": {
+        "field": "compliance.due_list_prepared",
+        "operator": "==",
+        "value": false
+      },
+      "action": {
+        "flag": "DUE_LIST_NOT_PREPARED",
+        "message": "Due list of beneficiaries not prepared before clinic",
+        "remediation": "Ensure due list is prepared in advance to facilitate proper mobilization"
+      },
+      "evidence_fields": [
+        "compliance.due_list_prepared"
+      ]
+    }
+  ]
+}
