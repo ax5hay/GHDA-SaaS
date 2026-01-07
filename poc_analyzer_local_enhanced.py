@@ -594,7 +594,7 @@ class LocalGovernmentHealthAnalyzer:
     def __init__(self, base_url: str = "http://192.168.56.1:1234/v1", model_name: str = None):
         """Initialize analyzer."""
         self.base_url = base_url
-        self.model_name = model_name or os.environ.get("LM_STUDIO_MODEL", "phi-4-reasoning-plus")
+        self.model_name = model_name or os.environ.get("LM_STUDIO_MODEL", "openai/gpt-oss-20b")
         self.client = OpenAI(base_url=self.base_url, api_key="lm-studio")
         print(f"✅ Connected to local LM Studio at: {self.base_url}")
         print(f"🤖 Using model: {self.model_name}")
