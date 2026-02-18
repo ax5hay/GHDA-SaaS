@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
+  # PostgreSQL Database - Optimized for performance
   postgres:
     image: postgres:15-alpine
     container_name: ghda-postgres
@@ -9,17 +9,43 @@ services:
       POSTGRES_USER: ghda_user
       POSTGRES_PASSWORD: ghda_password
       POSTGRES_DB: ghda_saas
+      # Performance optimizations
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Resource limits for cost efficiency
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    # PostgreSQL performance tuning
+    command: >
+      postgres
+      -c shared_buffers=512MB
+      -c effective_cache_size=1536MB
+      -c maintenance_work_mem=128MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c max_connections=200
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ghda_user -d ghda_saas"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Redis (Cache & Message Broker)
+  # Redis (Cache & Message Broker) - Optimized
   redis:
     image: redis:7-alpine
     container_name: ghda-redis
@@ -27,13 +53,31 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    # Redis performance optimizations
+    command: >
+      redis-server
+      --maxmemory 400mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+      --tcp-keepalive 60
+      --timeout 300
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # MinIO (S3-compatible object storage)
+  # MinIO (S3-compatible object storage) - Optimized
   minio:
     image: minio/minio:latest
     container_name: ghda-minio
@@ -46,6 +90,15 @@ services:
       - "9001:9001"  # Console
     volumes:
       - minio_data:/data
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
@@ -69,13 +122,31 @@ services:
       echo 'MinIO bucket created';
       "
 
-  # API Server
+  # API Server - Optimized for performance
   api:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: ghda-api
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    # Use multiple workers for better concurrency (remove --reload in production)
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --workers 4
+      --loop uvloop
+      --http httptools
+      --access-log
+      --no-use-colors
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     environment:
       - DATABASE_URL=postgresql://ghda_user:ghda_password@postgres:5432/ghda_saas
       - REDIS_URL=redis://redis:6379/0
@@ -102,13 +173,30 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # Celery Worker
+  # Celery Worker - Optimized
   worker:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: ghda-worker
-    command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=4
+    # Optimized Celery configuration
+    command: >
+      celery -A app.workers.celery_app worker
+      --loglevel=info
+      --concurrency=4
+      --max-tasks-per-child=1000
+      --time-limit=300
+      --soft-time-limit=240
+      --optimization=fair
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     environment:
       - DATABASE_URL=postgresql://ghda_user:ghda_password@postgres:5432/ghda_saas
       - REDIS_URL=redis://redis:6379/0

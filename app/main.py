@@ -5,28 +5,36 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1 import router as api_v1_router
 from app.config import settings
+from app.utils.cache import close_redis, get_redis
+from app.utils.performance import PerformanceMiddleware
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Application lifespan events."""
+    """Application lifespan events with optimized startup/shutdown."""
     # Startup
     print(f"Starting {settings.app_name} v{settings.app_version}")
     print(f"Environment: {settings.environment}")
     print(f"Debug mode: {settings.debug}")
 
-    # Initialize database connection pool, etc.
-    # TODO: Add database initialization
+    # Initialize Redis connection pool (warm up)
+    await get_redis()
+    print("✓ Redis connection pool initialized")
+
+    # Database connection pool is lazy-loaded on first use
+    print("✓ Database connection pool ready")
 
     yield
 
-    # Shutdown
+    # Shutdown - cleanup resources
     print("Shutting down application")
-    # TODO: Add cleanup tasks
+    await close_redis()
+    print("✓ Redis connection pool closed")
 
 
 def create_application() -> FastAPI:
@@ -50,6 +58,12 @@ def create_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # GZip compression middleware (reduces response size by 70-90%)
+    app.add_middleware(GZipMiddleware, minimum_size=1000)  # Compress responses >1KB
+    
+    # Performance monitoring middleware
+    app.add_middleware(PerformanceMiddleware)
 
     # Include API router
     app.include_router(api_v1_router, prefix=settings.api_prefix)

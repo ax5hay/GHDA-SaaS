@@ -33,18 +33,45 @@ class Settings(BaseSettings):
         description="API description"
     )
 
-    # Database
+    # Database - Optimized for high performance
     database_url: str = Field(
         default="postgresql://ghda_user:ghda_password@localhost:5432/ghda_saas",
         description="Database connection URL"
     )
-    database_pool_size: int = Field(default=10, description="Database connection pool size")
-    database_max_overflow: int = Field(default=20, description="Database max overflow connections")
-    database_pool_timeout: int = Field(default=30, description="Database pool timeout (seconds)")
-    database_pool_recycle: int = Field(default=3600, description="Database pool recycle time (seconds)")
+    database_pool_size: int = Field(
+        default=20,  # Increased for better concurrency
+        description="Database connection pool size"
+    )
+    database_max_overflow: int = Field(
+        default=40,  # Increased for peak loads
+        description="Database max overflow connections"
+    )
+    database_pool_timeout: int = Field(
+        default=10,  # Reduced timeout for faster failure detection
+        description="Database pool timeout (seconds)"
+    )
+    database_pool_recycle: int = Field(
+        default=3600,  # Recycle connections every hour
+        description="Database pool recycle time (seconds)"
+    )
 
-    # Redis
-    redis_url: str = Field(default="redis://localhost:6379/0", description="Redis connection URL")
+    # Redis - Optimized configuration
+    redis_url: str = Field(
+        default="redis://localhost:6379/0",
+        description="Redis connection URL"
+    )
+    redis_max_connections: int = Field(
+        default=50,
+        description="Redis connection pool size"
+    )
+    redis_socket_timeout: int = Field(
+        default=5,
+        description="Redis socket timeout (seconds)"
+    )
+    redis_socket_keepalive: bool = Field(
+        default=True,
+        description="Enable Redis socket keepalive"
+    )
 
     # Celery
     celery_broker_url: str = Field(default="redis://localhost:6379/0", description="Celery broker URL")
