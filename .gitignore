@@ -19,7 +19,15 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
+
+# Node
+node_modules/
+.pnpm-store/
+dist/
+build/
+.next/
+.turbo/
+*.log
 
 # Virtual environments
 venv/
@@ -29,13 +37,6 @@ env/
 
 # Poetry
 poetry.lock
-
-# PyCharm
-.idea/
-
-# VSCode
-.vscode/
-*.code-workspace
 
 # Environment variables
 .env
@@ -63,17 +64,21 @@ htmlcov/
 .dmypy.json
 dmypy.json
 
-# Uploads and runtime data
-data/uploads/
-data/temp/
-*.tmp
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+*.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
-*.swp
-*.swo
-*~
+
+# Uploads and runtime data
+data/uploads/
+data/temp/
+*.tmp
 
 # Docker
 .dockerignore
@@ -109,4 +114,7 @@ secrets/
 # Reports
 reports/
 exports/
-analysis_reports
+analysis_reports/
+
+# Archive directory (old code and docs)
+archive/

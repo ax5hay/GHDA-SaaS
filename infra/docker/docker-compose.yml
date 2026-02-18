@@ -1,0 +1,355 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: ghda-postgres
+    environment:
+      POSTGRES_USER: ghda_user
+      POSTGRES_PASSWORD: ghda_password
+      POSTGRES_DB: ghda_saas
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    networks:
+      - ghda-saas
+    command: >
+      postgres
+      -c shared_buffers=512MB
+      -c effective_cache_size=1536MB
+      -c maintenance_work_mem=128MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c max_connections=200
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ghda_user -d ghda_saas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Redis (Cache & Message Broker)
+  redis:
+    image: redis:7-alpine
+    container_name: ghda-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - ghda-saas
+    command: >
+      redis-server
+      --maxmemory 400mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+      --tcp-keepalive 60
+      --timeout 300
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # MinIO (S3-compatible object storage)
+  minio:
+    image: minio/minio:latest
+    container_name: ghda-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - ghda-saas
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # MinIO bucket initialization
+  minio-init:
+    image: minio/mc:latest
+    container_name: ghda-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      until /usr/bin/mc config host add myminio http://minio:9000 minioadmin minioadmin; do
+        echo 'Waiting for MinIO...';
+        sleep 2;
+      done;
+      /usr/bin/mc mb myminio/ghda-documents --ignore-existing;
+      echo 'MinIO bucket created';
+      "
+    networks:
+      - ghda-saas
+
+  # Prometheus (Metrics)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ghda-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - ghda-saas
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # Grafana (Visualization)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ghda-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - ghda-saas
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Document Service
+  document-service:
+    build:
+      context: ../..
+      dockerfile: apps/document-service/Dockerfile
+    container_name: ghda-document-service
+    ports:
+      - "8001:8001"
+    env_file: ../../.env
+    environment:
+      DOCUMENT_SERVICE_PORT: 8001
+      DATABASE_URL: postgresql+asyncpg://ghda_user:ghda_password@postgres:5432/ghda_saas
+      REDIS_URL: redis://redis:6379/0
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import requests; requests.get('http://localhost:8001/health').raise_for_status()\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ghda-saas
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  # Report Service
+  report-service:
+    build:
+      context: ../..
+      dockerfile: apps/report-service/Dockerfile
+    container_name: ghda-report-service
+    ports:
+      - "8002:8002"
+    env_file: ../../.env
+    environment:
+      REPORT_SERVICE_PORT: 8002
+      DATABASE_URL: postgresql+asyncpg://ghda_user:ghda_password@postgres:5432/ghda_saas
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import requests; requests.get('http://localhost:8002/health').raise_for_status()\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ghda-saas
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  # Analytics Service
+  analytics-service:
+    build:
+      context: ../..
+      dockerfile: apps/analytics-service/Dockerfile
+    container_name: ghda-analytics-service
+    ports:
+      - "8003:8003"
+    env_file: ../../.env
+    environment:
+      ANALYTICS_SERVICE_PORT: 8003
+      DATABASE_URL: postgresql+asyncpg://ghda_user:ghda_password@postgres:5432/ghda_saas
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import requests; requests.get('http://localhost:8003/health').raise_for_status()\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ghda-saas
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  # Processing Service
+  processing-service:
+    build:
+      context: ../..
+      dockerfile: apps/processing-service/Dockerfile
+    container_name: ghda-processing-service
+    ports:
+      - "8004:8004"
+    env_file: ../../.env
+    environment:
+      PROCESSING_SERVICE_PORT: 8004
+      DATABASE_URL: postgresql+asyncpg://ghda_user:ghda_password@postgres:5432/ghda_saas
+      STORAGE_ENDPOINT: http://minio:9000
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import requests; requests.get('http://localhost:8004/health').raise_for_status()\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - ghda-saas
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ../..
+      dockerfile: apps/api-gateway/Dockerfile
+    container_name: ghda-api-gateway
+    ports:
+      - "3000:3000"
+    env_file: ../../.env
+    environment:
+      API_GATEWAY_PORT: 3000
+      DOCUMENT_SERVICE_HOST: document-service
+      DOCUMENT_SERVICE_PORT: 8001
+      REPORT_SERVICE_HOST: report-service
+      REPORT_SERVICE_PORT: 8002
+      ANALYTICS_SERVICE_HOST: analytics-service
+      ANALYTICS_SERVICE_PORT: 8003
+      PROCESSING_SERVICE_HOST: processing-service
+      PROCESSING_SERVICE_PORT: 8004
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/health', (r)=>{ r.resume(); process.exit(r.statusCode===200?0:1); }).on('error', ()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      document-service:
+        condition: service_healthy
+      report-service:
+        condition: service_healthy
+      analytics-service:
+        condition: service_healthy
+      processing-service:
+        condition: service_healthy
+    networks:
+      - ghda-saas
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  # Admin Dashboard
+  admin-dashboard:
+    build:
+      context: ../..
+      dockerfile: frontend/admin-dashboard/Dockerfile
+    container_name: ghda-admin-dashboard
+    ports:
+      - "3002:3002"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - ghda-saas
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+volumes:
+  pg-data:
+  redis-data:
+  minio-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  ghda-saas:
+    driver: bridge

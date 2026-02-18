@@ -1,15 +1,15 @@
-# 📚 GHDA-SaaS Documentation Hub
+# 📚 GHDA-SaaS Documentation Index
 
 <div align="center">
 
 **Government Health Data Automation SaaS**  
-*Automating analysis, validation, and intelligence extraction from government health field survey reports*
+*Production-Grade Microservices Architecture*
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)](https://fastapi.tiangolo.com/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](../LICENSE)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
+[![Node.js](https://img.shields.io/badge/node-20+-green.svg)](https://nodejs.org/)
 
-[Quick Start](#-quick-start) • [Architecture](#-architecture) • [Development](#-development) • [Performance](#-performance)
+[Quick Start](QUICKSTART.md) • [Architecture](#architecture) • [API](#api) • [Development](#development)
 
 </div>
 
@@ -17,373 +17,306 @@
 
 ## 🎯 Table of Contents
 
-### 🚀 Getting Started
-- [Quick Start Guide](#-quick-start)
-- [Project Overview](#-project-overview)
-- [Installation & Setup](#-installation--setup)
-
-### 🏗️ Architecture & Design
-- [System Architecture](#-system-architecture)
-- [Data Schema](#-data-schema)
-- [Project Structure](#-project-structure)
-- [API Specification](#-api-specification)
-
-### 💻 Development
-- [Development Guide](#-development-guide)
-- [Component Architecture](#-component-architecture)
-- [MVP Roadmap](#-mvp-roadmap)
-
-### ⚡ Performance & Optimization
-- [Performance Optimizations](#-performance-optimizations)
-- [Cost Efficiency](#-cost-efficiency)
-
-### 🔧 POC & Testing
-- [POC Guide](#-poc-guide)
-- [Troubleshooting](#-troubleshooting)
+- [Quick Start](#quick-start)
+- [Architecture](#architecture)
+- [Services](#services)
+- [API Reference](#api-reference)
+- [Development](#development)
+- [Performance](#performance)
+- [Deployment](#deployment)
 
 ---
 
 ## 🚀 Quick Start
 
-### What is GHDA-SaaS?
-
-GHDA-SaaS is a production-grade system that automates analysis, validation, and intelligence extraction from government health field survey reports. It replaces manual coordination by converting messy, multilingual (Hinglish/Roman Hindi) documents into structured data, gap analysis, compliance insights, and decision-ready outputs.
-
-**Key Features:**
-- ✅ **Intelligent Document Processing**: Handles DOCX, PDF, and scanned images with OCR
-- ✅ **Multilingual Support**: Processes Hinglish, Roman Hindi, and broken English
-- ✅ **Schema-First Architecture**: Converts unstructured reports into canonical JSON
-- ✅ **Phrase Normalization**: Maps noisy input to canonical intents without full translation
-- ✅ **Rule Engine**: Automated validation, gap detection, and compliance checking
-- ✅ **Qualitative Intelligence**: Cross-facility pattern detection and trend analysis
-- ✅ **Explainability**: Every decision is traceable to source text
-- ✅ **Government-Safe**: Audit trails, versioning, deterministic outputs
-
-### Installation & Setup
-
-#### Prerequisites
-- Python 3.11+
-- Docker & Docker Compose
-- Poetry (for dependency management)
-
-#### Quick Setup (5 minutes)
+Get started in 5 minutes. See [QUICKSTART.md](QUICKSTART.md) for detailed setup instructions.
 
 ```bash
-# 1. Clone the repository
-git clone <repo-url>
-cd GHDA-SaaS
+# Install dependencies
+pnpm install
 
-# 2. Copy environment variables
-cp .env.example .env
+# Start infrastructure
+docker-compose -f infra/docker/docker-compose.yml up -d
 
-# 3. Start services with Docker Compose
-docker-compose up -d
-
-# 4. Run database migrations
-docker-compose exec api alembic upgrade head
-
-# 5. Seed initial data
-docker-compose exec api python scripts/seed_data.py
-
-# 6. Access the application
-# API: http://localhost:8000
-# API Docs: http://localhost:8000/docs
-# MinIO Console: http://localhost:9001
-# Flower (Celery): http://localhost:5555
+# Start services
+pnpm dev
 ```
 
-**📖 Detailed Setup:** See [GETTING_STARTED.md](GETTING_STARTED.md) for comprehensive setup instructions.
+**Access Points:**
+- API Gateway: http://localhost:3000
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3001 (admin/admin)
 
 ---
 
 ## 🏗️ Architecture
 
-### System Architecture
+### Microservices Architecture
 
 ```
-Document Upload → Ingestion → Parsing → Normalization → Rules → Scoring → Dashboard
+API Gateway (Fastify) → Microservices → Infrastructure
+├── Document Service (8001)
+├── Report Service (8002)
+├── Analytics Service (8003)
+└── Processing Service (8004)
 ```
 
-**Core Components:**
-1. **Document Ingestion**: Accept and normalize various document formats (DOCX, PDF, images)
-2. **Structural Parser**: Convert unstructured document into canonical JSON structure
-3. **Phrase Normalization**: Map noisy multilingual phrases to canonical intents
-4. **Rule Engine**: Encode coordinator logic as explicit, versioned, explainable rules
-5. **Qualitative Intelligence**: Extract patterns and signals across reports
-6. **Scoring & Output**: Generate actionable scores and summaries
+### Technology Stack
 
-**📖 Full Architecture:** 
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Complete system architecture (Original)
-- [ARCHITECTURE_V2_AI_POWERED.md](ARCHITECTURE_V2_AI_POWERED.md) - AI-powered architecture V2 ⭐ **Recommended**
-
-### Data Schema
-
-The system uses a **canonical JSON schema** that every report must conform to, regardless of input format.
-
-**Key Schema Principles:**
-- Explicit nulls with `missing_reason`
-- Confidence scores for extracted values
-- Source traceability (link back to document positions)
-- Extensible structure for future enhancements
-
-**📖 Full Schema:** [SCHEMA.md](SCHEMA.md) - Complete canonical PPC JSON schema with examples
+- **API Gateway**: Fastify/TypeScript
+- **Microservices**: FastAPI/Python 3.11+
+- **Database**: PostgreSQL 15+ (JSONB support)
+- **Cache**: Redis
+- **Storage**: MinIO (S3-compatible)
+- **Observability**: Prometheus + Grafana
+- **Build**: Turborepo + pnpm
 
 ### Project Structure
 
 ```
 GHDA-SaaS/
-├── app/                    # Main application code
-│   ├── api/               # API endpoints
-│   ├── core/              # Core processing logic
-│   │   ├── ingestion/     # Document ingestion
-│   │   ├── parser/        # Structural parsing
-│   │   ├── normalization/ # Phrase normalization
-│   │   ├── rules/         # Rule engine
-│   │   ├── intelligence/  # Pattern analysis
-│   │   └── scoring/       # Scoring & summaries
-│   ├── models/            # Database models
-│   ├── schemas/           # Pydantic schemas
-│   ├── services/          # Business logic
-│   └── workers/           # Celery tasks
-├── data/                  # Data files
-│   ├── phrase_dictionaries/
-│   ├── rules/
-│   └── samples/
-├── tests/                 # Test suite
-└── docs/                  # Documentation
+├── apps/                  # Microservices
+│   ├── api-gateway/       # Fastify API Gateway
+│   ├── document-service/  # Document upload & storage
+│   ├── report-service/    # Report retrieval
+│   ├── analytics-service/ # Analytics & insights
+│   └── processing-service/# Document processing
+├── packages/              # Shared packages
+│   ├── db/               # Database models & connection
+│   ├── logging/          # Logging utilities
+│   ├── config/           # Configuration management
+│   └── auth/             # Authentication utilities
+├── frontend/             # Frontend applications
+├── infra/                # Infrastructure
+│   ├── docker/           # Docker Compose
+│   └── k8s/              # Kubernetes manifests
+└── docs/                 # Documentation
 ```
 
-**📖 Full Structure:** [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) - Detailed project organization
+---
 
-### API Specification
+## 🔧 Services
 
-RESTful API built with FastAPI providing:
-- Document management endpoints
-- Report retrieval and analytics
-- Admin interface for rules and dictionaries
-- Health checks and monitoring
+### API Gateway
+- **Port**: 3000
+- **Technology**: Fastify/TypeScript
+- **Responsibilities**: Request routing, authentication, rate limiting
+- **Health**: http://localhost:3000/health
 
-**📖 Full API Spec:** [development/API_SPECIFICATION.md](development/API_SPECIFICATION.md) - Complete API documentation
+### Document Service
+- **Port**: 8001
+- **Technology**: FastAPI/Python
+- **Responsibilities**: Document upload, storage, metadata
+- **Health**: http://localhost:8001/health
+
+### Report Service
+- **Port**: 8002
+- **Technology**: FastAPI/Python
+- **Responsibilities**: Report retrieval, management, export
+- **Status**: To be implemented
+
+### Analytics Service
+- **Port**: 8003
+- **Technology**: FastAPI/Python
+- **Responsibilities**: Analytics, trends, insights
+- **Status**: To be implemented
+
+### Processing Service
+- **Port**: 8004
+- **Technology**: FastAPI/Python
+- **Responsibilities**: Document processing, parsing, normalization
+- **Status**: To be implemented
+
+---
+
+## 📡 API Reference
+
+### API Gateway Endpoints
+
+**Base URL**: http://localhost:3000
+
+#### Health Check
+```http
+GET /health
+```
+
+#### Service Health
+```http
+GET /health/services
+```
+
+#### Document Upload
+```http
+POST /api/v1/document-service/documents/upload
+Content-Type: multipart/form-data
+
+file: <file>
+tenant_id: <number>
+```
+
+#### Get Document
+```http
+GET /api/v1/document-service/documents/{document_id}
+```
+
+#### Get Document Status
+```http
+GET /api/v1/document-service/documents/{document_id}/status
+```
+
+### Service Endpoints
+
+All services expose:
+- `GET /health` - Health check
+- `GET /metrics` - Prometheus metrics
 
 ---
 
 ## 💻 Development
 
-### Development Guide
+### Local Development
 
-**Tech Stack:**
-- **Backend**: Python 3.11, FastAPI
-- **Database**: PostgreSQL 15+ (with JSONB support)
-- **Cache & Queue**: Redis, Celery
-- **Object Storage**: MinIO (S3-compatible)
-- **Document Processing**: python-docx, PyPDF2, pdfplumber, Tesseract OCR
-- **Deployment**: Docker, Docker Compose, Kubernetes (production)
-
-**Local Development:**
 ```bash
 # Install dependencies
-poetry install
+pnpm install
 
-# Start services (PostgreSQL, Redis, MinIO)
-docker-compose up -d postgres redis minio
+# Start infrastructure
+docker-compose -f infra/docker/docker-compose.yml up -d
 
-# Run migrations
-poetry run alembic upgrade head
+# Start all services (development)
+pnpm dev
 
-# Start API server
-poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+# Build all services
+pnpm build
 
-# Start Celery worker (in another terminal)
-poetry run celery -A app.workers.celery_app worker --loglevel=info
+# Run tests
+pnpm test
 ```
 
-**📖 Development Details:** See [GETTING_STARTED.md](GETTING_STARTED.md) for full development guide
+### Service Development
 
-### Component Architecture
+**API Gateway:**
+```bash
+cd apps/api-gateway
+pnpm dev
+```
 
-#### Phrase Normalization Engine
-Maps noisy multilingual phrases to canonical intents without full translation.
+**Document Service:**
+```bash
+cd apps/document-service
+python3 -m uvicorn document_service.main:app --reload --host 0.0.0.0 --port 8001
+```
 
-**📖 Details:** [development/PHRASE_NORMALIZATION_ENGINE.md](development/PHRASE_NORMALIZATION_ENGINE.md)
+### Environment Variables
 
-#### Rule Engine
-Explicit, versioned rules for validation, gap detection, and compliance checking.
-
-**📖 Details:** [development/RULE_ENGINE_ARCHITECTURE.md](development/RULE_ENGINE_ARCHITECTURE.md)
-
-### MVP Roadmap
-
-12-16 week implementation plan for production-ready MVP:
-
-- **Phase 1 (Weeks 1-4)**: Foundation & Infrastructure
-- **Phase 2 (Weeks 5-8)**: Core Processing Pipeline
-- **Phase 3 (Weeks 9-10)**: API & Administration
-- **Phase 4 (Weeks 11-12)**: Testing & Deployment
-
-**📖 Full Roadmap:** [MVP_ROADMAP.md](MVP_ROADMAP.md) - Detailed implementation timeline
+Key environment variables (see `.env.example`):
+- `DATABASE_URL` - PostgreSQL connection string
+- `REDIS_URL` - Redis connection string
+- `API_GATEWAY_PORT` - API Gateway port (default: 3000)
+- `JWT_SECRET` - JWT secret key
+- `STORAGE_ENDPOINT` - MinIO/S3 endpoint
 
 ---
 
-## ⚡ Performance & Optimization
+## ⚡ Performance
 
-### Performance Optimizations
+### Optimizations
 
-The system has been optimized for **lightning-fast response times** and **cost efficiency**:
-
-#### Response Times
-- ⚡ **Cached Requests**: <50ms
-- ⚡ **Database Queries**: <200ms (was ~500ms)
-- ⚡ **API Responses**: <100ms average (was ~300ms)
-
-#### Resource Usage
-- 💾 **Memory**: Reduced by 40-60%
-- 🖥️ **CPU**: Better utilization with async operations
-- 📡 **Bandwidth**: Reduced by 70-90% with compression
-- 🗄️ **Database Load**: Reduced by 60-80% with caching
-
-#### Key Optimizations
 - **Database**: Connection pooling (20 connections), asyncpg, comprehensive indexes
 - **Caching**: Redis with 50 connection pool, optimized TTLs
 - **API**: GZip compression, uvloop, httptools, 4 workers
 - **Docker**: Multi-stage builds (40% smaller images), resource limits
-- **PostgreSQL**: Optimized shared_buffers, work_mem, max_connections
 
-**📖 Full Details:** [PERFORMANCE_OPTIMIZATIONS.md](PERFORMANCE_OPTIMIZATIONS.md) - Complete optimization guide
+### Performance Targets
 
-### Cost Efficiency
+- **Cached Requests**: <50ms
+- **Database Queries**: <200ms
+- **API Responses**: <100ms average
+- **Throughput**: 1000+ requests/second
 
-- **Container Resources**: Right-sized with limits
-- **Database Connections**: Efficient pooling reduces overhead
-- **Storage I/O**: Proper indexing reduces I/O operations
-- **Network**: Compression reduces data transfer costs by 70-90%
+### Monitoring
+
+- **Prometheus**: Metrics collection at http://localhost:9090
+- **Grafana**: Visualization at http://localhost:3001
+- **Health Checks**: All services expose `/health` endpoint
 
 ---
 
-## 🔧 POC & Testing
+## 🚢 Deployment
 
-### POC Guide
+### Docker Compose
 
-The project includes standalone POC scripts for testing AI-powered document analysis:
+```bash
+# Start all services
+docker-compose -f infra/docker/docker-compose.yml up -d
 
-#### Option 1: Cloud Version (Anthropic Claude)
-- **File**: `poc_analyzer.py`
-- **Setup**: Requires Anthropic API key
-- **Pros**: Highest accuracy, fast (15-30s)
-- **Cons**: API costs (~$0.10-0.30 per report)
+# Stop services
+docker-compose -f infra/docker/docker-compose.yml down
 
-#### Option 2: Local Version (LM Studio)
-- **File**: `poc_analyzer_local.py`
-- **Setup**: Requires LM Studio with local model
-- **Pros**: 100% offline, zero API costs, government-safe
-- **Cons**: Slower (30-90s), requires LM Studio setup
+# View logs
+docker-compose -f infra/docker/docker-compose.yml logs -f
+```
 
-#### Option 3: Enhanced Local (Beautiful PDFs) ⭐ **Recommended**
-- **File**: `poc_analyzer_local_enhanced.py`
-- **Setup**: Same as Option 2 + PDF libraries
-- **Pros**: Everything from Option 2 + beautiful PDF reports
-- **Best for**: Government presentations, stakeholder reports
+### Production
 
-**📖 POC Details:** 
-- [README_POST_POC.md](README_POST_POC.md) - Complete POC guide
-- [ENHANCED_POC_GUIDE.md](ENHANCED_POC_GUIDE.md) - Enhanced PDF guide
-- [QUICK_REFERENCE.md](QUICK_REFERENCE.md) - Quick reference card
+1. **Build Services**
+   ```bash
+   pnpm build
+   ```
 
-### Model Selection
+2. **Deploy Infrastructure**
+   - Use Kubernetes manifests in `infra/k8s/`
+   - Or use managed services (RDS, ElastiCache, S3)
 
-Guide for selecting and configuring AI models for local POC:
+3. **Configure Environment**
+   - Set production environment variables
+   - Configure secrets management
+   - Set up monitoring and alerting
 
-**📖 Details:** [README_MODEL_SELECTION.md](README_MODEL_SELECTION.md) - Model selection guide
+---
+
+## 📖 Additional Resources
+
+### Data Schema
+- **Canonical JSON Schema**: See `data/rules/` and `data/phrase_dictionaries/`
+- **Database Models**: See `packages/db/src/ghda_db/models.py`
+
+### Component Architecture
+- **Phrase Normalization**: See `docs/development/PHRASE_NORMALIZATION_ENGINE.md`
+- **Rule Engine**: See `docs/development/RULE_ENGINE_ARCHITECTURE.md`
+- **API Specification**: See `docs/development/API_SPECIFICATION.md`
+
+### Shared Packages
+- **Database**: `packages/db/` - Models, connection pooling
+- **Logging**: `packages/logging/` - Structured logging
+- **Config**: `packages/config/` - Service registry
+- **Auth**: `packages/auth/` - JWT utilities
+
+---
+
+## 🆘 Support
 
 ### Troubleshooting
 
-Common issues and solutions:
+**Services not starting:**
+- Check Docker containers: `docker-compose ps`
+- Verify environment variables
+- Check service logs
 
-**LM Studio Issues:**
-- Connection problems
-- Model selection
-- Performance tuning
+**Database connection issues:**
+- Verify PostgreSQL is running
+- Check DATABASE_URL in .env
+- Ensure database exists
 
-**📖 Details:** [TROUBLESHOOTING_LM_STUDIO.md](TROUBLESHOOTING_LM_STUDIO.md) - Troubleshooting guide
+**Port conflicts:**
+- Check if ports are in use
+- Change ports in .env if needed
 
----
+### Getting Help
 
-## 📊 Documentation Map
-
-### Core Documentation
-| Document | Description | Status |
-|----------|-------------|--------|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Original system architecture | 📘 Reference |
-| [ARCHITECTURE_V2_AI_POWERED.md](ARCHITECTURE_V2_AI_POWERED.md) | AI-powered architecture V2 | ⭐ **Recommended** |
-| [SCHEMA.md](SCHEMA.md) | Canonical JSON schema | 📘 Essential |
-| [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) | Project organization | 📘 Reference |
-| [GETTING_STARTED.md](GETTING_STARTED.md) | Setup and development guide | 📘 Essential |
-
-### Development Documentation
-| Document | Description | Status |
-|----------|-------------|--------|
-| [MVP_ROADMAP.md](MVP_ROADMAP.md) | Implementation roadmap | 📘 Planning |
-| [development/API_SPECIFICATION.md](development/API_SPECIFICATION.md) | API endpoints | 📘 Reference |
-| [development/PHRASE_NORMALIZATION_ENGINE.md](development/PHRASE_NORMALIZATION_ENGINE.md) | Phrase normalization design | 📘 Technical |
-| [development/RULE_ENGINE_ARCHITECTURE.md](development/RULE_ENGINE_ARCHITECTURE.md) | Rule engine design | 📘 Technical |
-
-### Performance & Optimization
-| Document | Description | Status |
-|----------|-------------|--------|
-| [PERFORMANCE_OPTIMIZATIONS.md](PERFORMANCE_OPTIMIZATIONS.md) | Performance guide | ⚡ **Essential** |
-
-### POC & Testing
-| Document | Description | Status |
-|----------|-------------|--------|
-| [README_POST_POC.md](README_POST_POC.md) | POC overview | 🔧 Testing |
-| [ENHANCED_POC_GUIDE.md](ENHANCED_POC_GUIDE.md) | Enhanced PDF guide | 🔧 Testing |
-| [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | Quick reference | 🔧 Testing |
-| [README_MODEL_SELECTION.md](README_MODEL_SELECTION.md) | Model selection | 🔧 Testing |
-| [TROUBLESHOOTING_LM_STUDIO.md](TROUBLESHOOTING_LM_STUDIO.md) | Troubleshooting | 🔧 Testing |
-
----
-
-## 🎯 Quick Links by Role
-
-### For Developers
-- [Getting Started](GETTING_STARTED.md) - Setup and development
-- [Project Structure](PROJECT_STRUCTURE.md) - Code organization
-- [API Specification](development/API_SPECIFICATION.md) - API endpoints
-- [Performance Optimizations](PERFORMANCE_OPTIMIZATIONS.md) - Performance guide
-
-### For Architects
-- [Architecture V2](ARCHITECTURE_V2_AI_POWERED.md) - System architecture
-- [Schema](SCHEMA.md) - Data structure
-- [Phrase Normalization](development/PHRASE_NORMALIZATION_ENGINE.md) - Component design
-- [Rule Engine](development/RULE_ENGINE_ARCHITECTURE.md) - Component design
-
-### For Project Managers
-- [MVP Roadmap](MVP_ROADMAP.md) - Implementation timeline
-- [Architecture Overview](ARCHITECTURE.md) - High-level overview
-- [Performance Metrics](PERFORMANCE_OPTIMIZATIONS.md) - Performance benchmarks
-
-### For Testers
-- [POC Guide](README_POST_POC.md) - Testing with POC scripts
-- [Quick Reference](QUICK_REFERENCE.md) - Quick commands
-- [Troubleshooting](TROUBLESHOOTING_LM_STUDIO.md) - Common issues
-
----
-
-## 📝 Contributing
-
-1. Read the [Architecture](ARCHITECTURE_V2_AI_POWERED.md) documentation
-2. Follow the [Project Structure](PROJECT_STRUCTURE.md) guidelines
-3. Review the [MVP Roadmap](MVP_ROADMAP.md) for current priorities
-4. Check [Performance Optimizations](PERFORMANCE_OPTIMIZATIONS.md) for best practices
-
----
-
-## 🔗 External Resources
-
-- **FastAPI**: https://fastapi.tiangolo.com/
-- **PostgreSQL**: https://www.postgresql.org/docs/
-- **Redis**: https://redis.io/docs/
-- **Celery**: https://docs.celeryq.dev/
-- **Docker**: https://docs.docker.com/
+- **Documentation**: This index
+- **Quick Start**: [QUICKSTART.md](QUICKSTART.md)
+- **Project README**: [../README.md](../README.md)
 
 ---
 

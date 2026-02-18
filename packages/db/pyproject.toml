@@ -1,0 +1,18 @@
+[project]
+name = "ghda-db"
+version = "0.1.0"
+description = "GHDA-SaaS Database Package"
+requires-python = ">=3.9"
+dependencies = [
+    "sqlalchemy>=2.0.0",
+    "asyncpg>=0.29.0",
+    "loguru>=0.7.0",
+    "pydantic>=2.5.0",
+]
+
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,37 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:3000']
+    metrics_path: '/metrics'
+
+  - job_name: 'document-service'
+    static_configs:
+      - targets: ['document-service:8001']
+    metrics_path: '/metrics'
+
+  - job_name: 'report-service'
+    static_configs:
+      - targets: ['report-service:8002']
+    metrics_path: '/metrics'
+
+  - job_name: 'analytics-service'
+    static_configs:
+      - targets: ['analytics-service:8003']
+    metrics_path: '/metrics'
+
+  - job_name: 'processing-service'
+    static_configs:
+      - targets: ['processing-service:8004']
+    metrics_path: '/metrics'
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
